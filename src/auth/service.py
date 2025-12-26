@@ -13,9 +13,8 @@ from . import model
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from ..exceptions import AuthenticationError, UserAlreadyExistsError
 import logging
+import os
 
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
@@ -40,11 +39,11 @@ def create_access_token(email: str, user_id: UUID, expires_delta: timedelta) -> 
         'id': str(user_id),
         'exp': datetime.now(timezone.utc) + expires_delta
     }
-    return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(encode, os.getenv("SECRET_KEY"), algorithm=os.getenv("ALGORITHM"))
 
 def verify_token(token: str) -> model.TokenData:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM") ])
         user_id: str = payload.get("id")
         return model.TokenData(user_id=user_id)
     except PyJWTError:
